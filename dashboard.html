@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="dashboard-page">
+    <div class="container dashboard-container" data-dashboard>
+      <div class="card dashboard-card">
+        <div class="dashboard-header">
+          <div>
+            <h1 class="dashboard-title" data-greeting>Welcome back</h1>
+            <p class="subtitle">
+              Logged in as <span class="email-pill" data-email>user</span>
+            </p>
+          </div>
+          <div class="badge">Active</div>
+        </div>
+        <div class="dashboard-grid">
+          <div class="info-card">
+            <h3>Quick status</h3>
+            <p>All systems are running smoothly.</p>
+            <div class="stat">
+              <span>Session health</span>
+              <strong>Great</strong>
+            </div>
+          </div>
+          <div class="info-card">
+            <h3>Progress</h3>
+            <p>Daily goal completion</p>
+            <div class="progress">
+              <div class="progress-bar" data-progress></div>
+            </div>
+            <div class="stat">
+              <span>Achievement</span>
+              <strong data-progress-text>72%</strong>
+            </div>
+          </div>
+        </div>
+        <div class="dashboard-actions">
+          <button type="button" class="logout-button" data-logout>Logout</button>
+        </div>
+      </div>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
