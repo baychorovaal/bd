@@ -26,26 +26,27 @@ function handleRegister(form) {
 
     const email = form.email.value.trim();
     const password = form.password.value.trim();
+    const age = Number(form.age.value);
 
     try {
       const response = await fetch(`${API_BASE_URL}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, age }),
       });
 
       const data = await safeJson(response);
       if (response.ok) {
-        setMessage(messageEl, "Registration successful", "success");
+        setMessage(
+          messageEl,
+          data?.message || "Registration successful",
+          "success"
+        );
         form.reset();
         return;
       }
 
-      setMessage(
-        messageEl,
-        mapRegisterError(data?.message || "Email already exists"),
-        "error"
-      );
+      setMessage(messageEl, data?.message || "Registration failed", "error");
     } catch (error) {
       setMessage(messageEl, "Unable to register. Try again.", "error");
     }
@@ -71,16 +72,14 @@ function handleLogin(form) {
       const data = await safeJson(response);
       if (response.ok && data?.token) {
         localStorage.setItem(TOKEN_KEY, data.token);
-        setMessage(messageEl, "Login successful", "success");
-        window.location.href = "./dashboard.html";
+        setMessage(messageEl, data?.message || "Login successful", "success");
+        setTimeout(() => {
+          window.location.href = "./dashboard.html";
+        }, 400);
         return;
       }
 
-      setMessage(
-        messageEl,
-        mapLoginError(data?.message || "Invalid password"),
-        "error"
-      );
+      setMessage(messageEl, data?.message || "Login failed", "error");
     } catch (error) {
       setMessage(messageEl, "Unable to login. Try again.", "error");
     }
@@ -94,22 +93,36 @@ function handleDashboard() {
     return;
   }
 
-  const emailEl = document.querySelector("[data-email]");
+  const emailEls = document.querySelectorAll("[data-email]");
+  const ageEl = document.querySelector("[data-age]");
+  const avatarEl = document.querySelector("[data-avatar]");
+  const messageEl = document.querySelector("[data-message]");
   const greetingEl = document.querySelector("[data-greeting]");
   const progressEl = document.querySelector("[data-progress]");
   const progressTextEl = document.querySelector("[data-progress-text]");
+  const lastUpdateEl = document.querySelector("[data-last-update]");
+  const avatarInput = document.querySelector("[data-avatar-input]");
+  const avatarButton = document.querySelector("[data-avatar-button]");
+  const ageInput = document.getElementById("newAge");
+  const updateAgeBtn = document.getElementById("updateAgeBtn");
+  const ageFocusBtn = document.querySelector("[data-age-focus]");
 
-  const email = extractEmailFromToken(token);
-  if (emailEl) {
-    emailEl.textContent = email || "user";
-  }
   if (greetingEl) {
     greetingEl.classList.add("greeting-animate");
+  }
+  const cards = document.querySelectorAll(".lux-card");
+  if (cards.length) {
+    cards.forEach((card, index) => {
+      card.style.animationDelay = `${index * 80}ms`;
+    });
   }
   if (progressEl && progressTextEl) {
     const value = getDailyProgress();
     progressEl.style.width = `${value}%`;
     progressTextEl.textContent = `${value}%`;
+  }
+  if (lastUpdateEl) {
+    lastUpdateEl.textContent = new Date().toLocaleTimeString();
   }
 
   const logoutButton = document.querySelector("[data-logout]");
@@ -119,29 +132,161 @@ function handleDashboard() {
       window.location.replace("./login.html");
     });
   }
-}
 
-function extractEmailFromToken(token) {
-  const payload = decodeJwtPayload(token);
-  if (!payload) return "";
-  return payload.email || payload.user || payload.username || "";
-}
-
-function decodeJwtPayload(token) {
-  const parts = token.split(".");
-  if (parts.length < 2) return null;
-  const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-  try {
-    const json = decodeURIComponent(
-      atob(base64)
-        .split("")
-        .map((char) => `%${char.charCodeAt(0).toString(16).padStart(2, "0")}`)
-        .join("")
-    );
-    return JSON.parse(json);
-  } catch (error) {
-    return null;
+  if (avatarButton && avatarInput) {
+    avatarButton.addEventListener("click", () => avatarInput.click());
   }
+
+  if (avatarInput) {
+    avatarInput.addEventListener("change", async () => {
+      if (!avatarInput.files || !avatarInput.files[0]) return;
+      const file = avatarInput.files[0];
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      setMessage(messageEl, "");
+      setBusy(avatarButton, true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/me/avatar`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const data = await safeJson(response);
+        if (response.ok) {
+          setMessage(
+            messageEl,
+            data?.message || "Avatar updated",
+            "success"
+          );
+          if (avatarEl) {
+            const avatarUrl =
+              data?.avatarUrl || localStorage.getItem("avatar_url");
+            if (data?.avatarUrl) {
+              localStorage.setItem("avatar_url", data.avatarUrl);
+            }
+            avatarEl.src = resolveAvatarUrl(avatarUrl) || URL.createObjectURL(file);
+          }
+          return;
+        }
+        setMessage(messageEl, data?.message || "Upload failed", "error");
+      } catch (error) {
+        setMessage(messageEl, "Unable to upload avatar.", "error");
+      } finally {
+        setBusy(avatarButton, false);
+      }
+    });
+  }
+
+  if (ageFocusBtn && ageInput) {
+    ageFocusBtn.addEventListener("click", () => {
+      ageInput.focus();
+    });
+  }
+
+  if (updateAgeBtn && ageInput) {
+    updateAgeBtn.addEventListener("click", async () => {
+      const newAge = Number(ageInput.value);
+      if (!newAge) {
+        setMessage(messageEl, "Enter a valid age.", "error");
+        return;
+      }
+
+      setMessage(messageEl, "");
+      setBusy(updateAgeBtn, true);
+      try {
+        const { response, data } = await updateAge(token, newAge);
+        if (response.ok) {
+          if (ageEl) {
+            ageEl.textContent = data?.age ?? String(newAge);
+          }
+          if (lastUpdateEl) {
+            lastUpdateEl.textContent = new Date().toLocaleTimeString();
+          }
+          setMessage(
+            messageEl,
+            data?.message || "Age updated successfully.",
+            "success"
+          );
+          return;
+        }
+
+        if (response.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          window.location.replace("./login.html");
+          return;
+        }
+        setMessage(messageEl, data?.message || "Failed to update age.", "error");
+      } catch (error) {
+        setMessage(messageEl, "Unable to update age.", "error");
+      } finally {
+        setBusy(updateAgeBtn, false);
+      }
+    });
+  }
+
+  loadUserProfile(token, {
+    emailEls,
+    ageEl,
+    avatarEl,
+    messageEl,
+  });
+}
+
+async function loadUserProfile(token, elements) {
+  const { emailEls, ageEl, avatarEl, messageEl } = elements;
+  try {
+    const response = await fetch(`${API_BASE_URL}/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await safeJson(response);
+    if (!response.ok) {
+      setMessage(messageEl, data?.message || "Failed to load profile", "error");
+      if (response.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        window.location.replace("./login.html");
+      }
+      return;
+    }
+
+    if (emailEls) {
+      emailEls.forEach((el) => {
+        el.textContent = data?.email || "user";
+      });
+    }
+    if (ageEl) {
+      ageEl.textContent = data?.age ?? "--";
+    }
+    if (avatarEl) {
+      const storedAvatar = localStorage.getItem("avatar_url");
+      const avatarUrl = data?.avatarUrl || storedAvatar;
+      if (data?.avatarUrl) {
+        localStorage.setItem("avatar_url", data.avatarUrl);
+      }
+      avatarEl.src = resolveAvatarUrl(avatarUrl) || avatarEl.src;
+    }
+  } catch (error) {
+    setMessage(messageEl, "Unable to load profile.", "error");
+  }
+}
+
+async function updateAge(token, age) {
+  const payload = JSON.stringify({ age });
+  const options = {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: payload,
+  };
+
+  let response = await fetch(`${API_BASE_URL}/me`, options);
+  if (response.status === 404) {
+    response = await fetch(`${API_BASE_URL}/me/update`, options);
+  }
+  const data = await safeJson(response);
+  return { response, data };
 }
 
 function getDailyProgress() {
@@ -159,24 +304,22 @@ function setMessage(element, text, type) {
   }
 }
 
+function setBusy(button, isBusy) {
+  if (!button) return;
+  button.disabled = isBusy;
+  button.classList.toggle("is-loading", isBusy);
+}
+
+function resolveAvatarUrl(url) {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 async function safeJson(response) {
   try {
     return await response.json();
   } catch (error) {
     return null;
   }
-}
-
-function mapRegisterError(message) {
-  const lower = String(message).toLowerCase();
-  if (lower.includes("exists")) return "Email already exists";
-  return "Unable to register. Try again.";
-}
-
-function mapLoginError(message) {
-  const lower = String(message).toLowerCase();
-  if (lower.includes("invalid") || lower.includes("password")) {
-    return "Invalid password";
-  }
-  return "Unable to login. Try again.";
 }

@@ -5,10 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard</title>
     <link rel="stylesheet" href="./styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body class="dashboard-page">
     <div class="container dashboard-container" data-dashboard>
-      <div class="card dashboard-card">
+      <div class="card dashboard-card lux-card">
         <div class="dashboard-header">
           <div>
             <h1 class="dashboard-title" data-greeting>Welcome back</h1>
@@ -16,20 +20,73 @@
               Logged in as <span class="email-pill" data-email>user</span>
             </p>
           </div>
-          <div class="badge">Active</div>
+          <div class="badge">Premium</div>
         </div>
-        <div class="dashboard-grid">
-          <div class="info-card">
-            <h3>Quick status</h3>
-            <p>All systems are running smoothly.</p>
-            <div class="stat">
-              <span>Session health</span>
-              <strong>Great</strong>
+
+        <div class="dashboard-profile lux-card">
+          <img
+            class="avatar"
+            data-avatar
+            alt="User avatar"
+            src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjEyMCIgdmlld0JveD0iMCAwIDEyMCAxMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iNjAiIGN5PSI2MCIgcj0iNjAiIGZpbGw9IiNFNUYzRkYiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjQ4IiByPSIyMCIgZmlsbD0iIzQwRTBEMCIvPjxwYXRoIGQ9Ik0yMCAxMDJjMTAuNC0yMC4yIDM0LjYtMzIuMiA0MC0zMi4yUzkwIDgxLjggMTAwIDEwMmgtODBaIiBmaWxsPSIjMDQ2MzA3Ii8+PC9zdmc+"
+          />
+          <div class="profile-details">
+            <div class="profile-row">
+              <span>Email</span>
+              <strong data-email>user</strong>
+            </div>
+            <div class="profile-row">
+              <span>Age</span>
+              <strong data-age>--</strong>
+            </div>
+            <div class="profile-row profile-row-stack">
+              <span>Update Age</span>
+              <div class="age-update">
+                <input
+                  type="number"
+                  id="newAge"
+                  placeholder="Enter new age"
+                  min="1"
+                  max="120"
+                />
+                <div class="age-actions">
+                  <button
+                    type="button"
+                    class="btn btn-outline"
+                    data-age-focus
+                  >
+                    Enter New Age
+                  </button>
+                  <button type="button" class="btn btn-primary" id="updateAgeBtn">
+                    Update Age
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="info-card">
+        </div>
+
+        <div class="upload-row">
+          <input type="file" accept="image/*" data-avatar-input />
+          <button type="button" class="btn btn-outline" data-avatar-button>
+            Upload avatar
+          </button>
+        </div>
+
+        <div class="message" data-message></div>
+
+        <div class="dashboard-grid">
+          <div class="info-card lux-card">
+            <h3>Quick status</h3>
+            <p>Account synced and ready.</p>
+            <div class="stat">
+              <span>Last update</span>
+              <strong data-last-update>Just now</strong>
+            </div>
+          </div>
+          <div class="info-card lux-card">
             <h3>Progress</h3>
-            <p>Daily goal completion</p>
+            <p>Weekly activity</p>
             <div class="progress">
               <div class="progress-bar" data-progress></div>
             </div>
@@ -40,7 +97,7 @@
           </div>
         </div>
         <div class="dashboard-actions">
-          <button type="button" class="logout-button" data-logout>Logout</button>
+          <button type="button" class="btn btn-primary" data-logout>Logout</button>
         </div>
       </div>
     </div>

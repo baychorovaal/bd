@@ -10,7 +10,7 @@
     <div class="container">
       <div class="card">
         <h1>Create account</h1>
-        <p class="subtitle">Register with your email and password.</p>
+        <p class="subtitle">Register with your email, password, and age.</p>
         <form data-form="register">
           <label for="email">Email</label>
           <input
@@ -29,6 +29,16 @@
             placeholder="••••••••"
             required
             autocomplete="new-password"
+          />
+          <label for="age">Age</label>
+          <input
+            id="age"
+            name="age"
+            type="number"
+            min="1"
+            max="120"
+            placeholder="25"
+            required
           />
           <button type="submit">Register</button>
         </form>
